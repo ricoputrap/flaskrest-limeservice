@@ -9,6 +9,11 @@ import os
 @TODO delete soon for testing only 
 (on a real case, these imports should be called on controllers/services)
 '''
+from project.models.survey import SurveyModel
+from project.models.survey_participant import SurveyParticipantModel
+from project.models.survey_blast import SurveyBlastModel
+from project.models.activity import ActivityModel
+from project.models.email_template import EmailTemplateModel
 
 def init_app():
   '''Flask Application Factory'''
