@@ -17,6 +17,9 @@ from project.models.email_template import EmailTemplateModel
 
 def init_app():
   '''Flask Application Factory'''
+  from project.controllers.v1.survey import Survey
+  from project.middleware import AuthMiddleware
+
   app = Flask(__name__)
   api = Api(app)
 
@@ -26,5 +29,8 @@ def init_app():
   db.init_app(app)
   ma.init_app(app)
   migrate.init_app(app, db)
+
+  api.add_resource(Survey, "/survey/")
+  app.wsgi_app = AuthMiddleware(app.wsgi_app)
 
   return app
