@@ -2,6 +2,8 @@ import logging
 
 from citric import Client, exceptions
 
+from dotenv import load_dotenv
+load_dotenv()
 import os
 
 from project.clients.abstract import AbstractClient
@@ -11,6 +13,9 @@ def client_factory():
     HOST = os.getenv('LIMESURVEY_HOST')
     USERNAME = os.environ.get('LIMESURVEY_USERNAME')
     PASSWORD = os.environ.get('LIMESURVEY_PASSWORD')
+
+    print("HOST")
+    print(HOST)
     return Client(HOST, USERNAME, PASSWORD)
 
 
