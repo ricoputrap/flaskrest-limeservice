@@ -1,4 +1,5 @@
 from project.utils import db
+from datetime import datetime
 
 class SurveyModel(db.Model):
   '''
@@ -21,9 +22,9 @@ class SurveyModel(db.Model):
   limesurvey_id = db.Column(db.Integer, nullable=False)
   title = db.Column(db.String(255), nullable=False)
   status = db.Column(db.String(4), nullable=False, default="DRFT")
-  created_at = db.Column(db.DateTime, nullable=False)
+  created_at = db.Column(db.DateTime, nullable=False, default=datetime.now())
   created_by = db.Column(db.Integer, nullable=False)
-  updated_at = db.Column(db.DateTime, nullable=True)
+  updated_at = db.Column(db.DateTime, nullable=True, onupdate=datetime.now())
   updated_by = db.Column(db.Integer, nullable=True)
   participants = db.relationship('SurveyParticipantModel', backref='survey', lazy=True)
   activities = db.relationship('ActivityModel', backref='survey', lazy=True)
