@@ -7,14 +7,11 @@ class SurveyService:
 
   client = LimesurveyClient()
 
-  def get_list_surveys(self, page, pageSize):
-
-    # get from limesurvey
-    available_surveys = self.client.get_available_surveys()
-    surveys = []
-
-    # update the saved survey data in limeservice db 
-    # to be consistent with the ones in limesurvey
+  def __update_surveys_in_db(self, available_surveys):
+    '''
+    update the saved survey data in limeservice db 
+    to be consistent with the available ones in limesurvey
+    '''
     for survey_from_limesurvey in available_surveys:
       survey_in_db = SurveyModel.query.filter_by(limesurvey_id=survey_from_limesurvey['sid']).first()
       
@@ -26,6 +23,14 @@ class SurveyService:
         )
         db.session.add(new_survey)
         db.session.commit()
+
+  def get_list_surveys(self, page, pageSize):
+
+    # get from limesurvey
+    available_surveys = self.client.get_available_surveys()
+    surveys = []
+
+    self.__update_surveys_in_db(available_surveys)
 
     # prepare the parameter values
     page = int(page) if page else 1
