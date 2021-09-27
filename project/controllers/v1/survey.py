@@ -11,21 +11,15 @@ class Survey(Resource):
   def get(self, limesurvey_id = None):
     try:
       if limesurvey_id:
-        survey = self.survey_service.get_survey_detail(limesurvey_id)
-        print("======= SURVEY:")
-        print(survey)
-        response = {
-          "id": limesurvey_id,
-          "name": "Career Survey",
-          "status": "DRFT",
-          "data": survey
-        }
+        response = self.survey_service.get_survey_detail(limesurvey_id)
+        if "error" in response:
+          return make_response(response, response["status_code"])
       else:
         page = request.args.get("page")
         pageSize = request.args.get("pageSize")
         response = self.survey_service.get_list_surveys(page, pageSize)
         if "error" in response:
-          return make_response(response, 404)
+          return make_response(response, response["status_code"])
 
       return response
     except Exception as e:

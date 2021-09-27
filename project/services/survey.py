@@ -30,6 +30,8 @@ class SurveyService:
       db.session.add(new_survey)
       db.session.commit()
 
+
+
   def get_list_surveys(self, page, pageSize):
 
     self.__retrieve_and_update_surveys()
@@ -45,6 +47,7 @@ class SurveyService:
 
     if page > real_total_pages:
       return {
+        "status_code": 404,
         "error": {
           "title": "Page requested is not available",
           "detail": "Page " + str(page) + " is requested, only " + str(real_total_pages) + " is available."
@@ -69,13 +72,25 @@ class SurveyService:
       }
       return response
 
+
   def get_survey_detail(self, limesurvey_id):
-    # survey = SurveyModel.query.filter_by(limesurvey_id=limesurvey_id).first()
-    # if not survey:
-    #   return None
-    survey = self.client.get_survey_properties(limesurvey_id)['owner_id']
-    # print("===== OWNER:")
-    # print(survey['owner_id'])
-    return survey
+
+    self.__retrieve_and_update_surveys()
+    survey = SurveyModel.query.filter_by(limesurvey_id=limesurvey_id).first()
+
+    if not survey:
+      return {
+        "status_code": 404,
+        "error": {
+          "title": "Survey not found",
+          "detail": "Survey with id " + str(limesurvey_id) + " is not available."
+        }
+      }
+    else:
+      return {
+        "id": limesurvey_id,
+        "name": survey.title,
+        "status": survey.status
+      }
 
     
