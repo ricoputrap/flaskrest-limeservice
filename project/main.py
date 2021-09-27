@@ -28,6 +28,6 @@ def init_app():
   ma.init_app(app)
   migrate.init_app(app, db)
 
-  api.add_resource(Survey, "/api/v1/surveys/")
+  api.add_resource(Survey, "/api/v1/surveys/", "/api/v1/surveys/<limesurvey_id>")
 
   return app
