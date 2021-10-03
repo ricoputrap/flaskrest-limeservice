@@ -82,8 +82,8 @@ class SurveyService:
       return {
         "status_code": 404,
         "error": {
-          "title": "Survey not found",
-          "detail": "Survey with id " + str(limesurvey_id) + " is not available."
+          "title": "Survey doesn't exist",
+          "detail": "Survey with id " + str(limesurvey_id) + " doesn't exist."
         }
       }
     else:
