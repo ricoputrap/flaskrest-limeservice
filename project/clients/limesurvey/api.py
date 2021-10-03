@@ -79,3 +79,12 @@ class LimesurveyClient(AbstractClient):
             self.logger.error(str(e))
             if not fail_silently:
                 raise e
+            
+    def delete_survey_participant(self, survey_id, participant_list, fail_silently=False):
+        try:
+            res = self.get_client().delete_participant(survey_id, participant_list)
+            return res
+        except Exception as e:
+            self.logger.error(str(e))
+            if not fail_silently:
+                raise e
