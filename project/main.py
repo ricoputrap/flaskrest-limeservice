@@ -31,5 +31,6 @@ def init_app():
 
   api.add_resource(Survey, "/api/v1/surveys/", "/api/v1/surveys/<limesurvey_id>")
   api.add_resource(Participant, "/api/v1/surveys/<survey_id>/participants")
-
+  app.add_url_rule("/api/v1/surveys/participants/csv", endpoint="participant", methods=["POST"])
+  # app.add_url_rule("/api/v1/surveys/participants/db", endpoint="participant", methods=["POST"])
   return app

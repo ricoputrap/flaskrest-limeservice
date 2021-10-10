@@ -1,6 +1,8 @@
 from project.models.survey_participant import SurveyParticipantModel
 from project.models.survey import SurveyModel
 import math
+import pandas as pd
+
 
 class ParticipantService:
 
@@ -61,3 +63,13 @@ class ParticipantService:
         "totalItems": real_total_participants,
         "items": computed_participants
       }
+
+  def add_participants_from_csv(self, csv_file):
+    df = pd.read_csv(csv_file)
+
+    # save participants to limeservice db
+
+    # check duplicate
+
+    # if has duplicate, set survey status to DUPL, return with dupl data
+    # else return { status: "draft" }
