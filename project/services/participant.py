@@ -1,11 +1,16 @@
 from project.models.survey_participant import SurveyParticipantModel
 from project.models.survey import SurveyModel
+from project.clients.limesurvey.api import LimesurveyClient
+from project.utils import db
 import math
 import pandas as pd
+import json
+from datetime import datetime 
 
 
 class ParticipantService:
 
+  client = LimesurveyClient()
 
   def get_list_participants(self, survey_id, page, pageSize):
 
@@ -24,7 +29,7 @@ class ParticipantService:
     page = int(page) if page else 1
     pageSize = int(pageSize) if pageSize else 5
 
-    participants = SurveyParticipantModel.query.filter_by(survey_id=survey_id).all()
+    participants = SurveyParticipantModel.query.filter_by(survey_id=survey.id).all()
     real_total_participants = len(participants)
     real_total_pages = math.ceil(real_total_participants / pageSize)
 
@@ -64,12 +69,59 @@ class ParticipantService:
         "items": computed_participants
       }
 
-  def add_participants_from_csv(self, csv_file):
-    df = pd.read_csv(csv_file)
+  def add_participants_from_csv(self, survey_id, csv_file):
 
+    # check if survey exists
+    survey = SurveyModel.query.filter_by(limesurvey_id=survey_id).first()
+    if not survey:
+      return {
+        "status_code": 404,
+        "error": {
+          "title": "Survey doesn't exist",
+          "detail": "Survey with id " + str(survey_id) + " doesn't exist."
+        }
+      }
+
+    # prepare dataframe from the csv file
+    df = pd.read_csv(csv_file)
+    df = df.rename(columns={
+      "nama": "name",
+      "angkatan": "batch_year",
+      "jurusan": "major"
+    })
+    submitted_participants = df.to_dict('records')
+
+    # check if the data size is enough
+    if len(submitted_participants) < 1:
+      return {
+        "status_code": 500,
+        "error": {
+          "title": "Empty Participant Data",
+          "detail": "The file has no data. Please provide at least 1 row participant data."
+        }
+      }
+
+    
     # save participants to limeservice db
+    for participant in submitted_participants:
+      
+      new_participant = SurveyParticipantModel(
+        survey_id = survey.id,
+        name = participant["name"],
+        email = participant["email"],
+        npm = participant["npm"],
+        batch_year = participant["batch_year"],
+        major = participant["major"],
+        created_at = datetime.now(),
+        created_by = self.client.get_survey_properties(survey_id)['owner_id']
+      )
+
+      db.session.add(new_participant)
+      db.session.commit()
 
     # check duplicate
 
     # if has duplicate, set survey status to DUPL, return with dupl data
     # else return { status: "draft" }
+
+    return ""

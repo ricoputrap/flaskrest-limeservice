@@ -21,7 +21,7 @@ class Participant(Resource):
         "errors": e
       }
   
-  def post(self):
+  def post(self, survey_id):
     try:
       path_splitted = request.path.split("/")
       post_type = path_splitted[-1]
@@ -31,7 +31,7 @@ class Participant(Resource):
         file_type = csv_file.__dict__['filename'][-3:]
         
         if file_type == "csv":
-          response = self.participant_service.add_participants_from_csv(csv_file)
+          response = self.participant_service.add_participants_from_csv(survey_id, csv_file)
           if "error" in response:
             return make_response(response, response["status_code"])
           return response
