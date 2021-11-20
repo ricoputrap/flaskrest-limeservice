@@ -90,6 +90,8 @@ class ParticipantService:
       "jurusan": "major"
     })
     submitted_participants = df.to_dict('records')
+    print("===== SUBMITTED_PARTICIPANTS:")
+    print(submitted_participants)
 
     # check if the data size is enough
     if len(submitted_participants) < 1:
@@ -101,6 +103,7 @@ class ParticipantService:
         }
       }
 
+    print("===== SUBMITTED PARTICIPANTS is VALID!!! =====")
     
     # save participants to limeservice db
     for participant in submitted_participants:
@@ -119,9 +122,49 @@ class ParticipantService:
       db.session.add(new_participant)
       db.session.commit()
 
-    # check duplicate
+    print("===== ADD PARTICIPANTS to LIMESERVICE DB is SUCCESS")
+
+    # populate participants data by email: dict
+    participants_dict_by_email = {}
+    saved_participants = SurveyParticipantModel.query.filter_by(survey_id=survey.id).all()
+
+    print("===== SAVED PARTICIPANTS:")
+    print(saved_participants)
+    
+    for participant in saved_participants:
+      participant_email = participant.email
+      participant_data = {
+        "id": participant.id,
+        "name": participant.name,
+        "email": participant.email,
+        "npm": participant.npm,
+        "angkatan": participant.batch_year,
+      }
+      if participant_email not in participants_dict_by_email:
+        participants_dict_by_email[participant_email] = [participant_data]
+      else:
+        participants_dict_by_email[participant_email].append(participant_data)
+
+    print("===== participants_dict_by_email ORIGINAL:")
+    print(participants_dict_by_email)
+
+    # remove non duplicate
+    email_to_remove = []
+    for email, data in participants_dict_by_email.items():
+      if len(data) < 2:
+        email_to_remove.append(email)
+   
+    for email in email_to_remove:
+      del participants_dict_by_email[email]
+
+    print("===== DUPLICATE DATA")
+    print(participants_dict_by_email)
+
 
     # if has duplicate, set survey status to DUPL, return with dupl data
     # else return { status: "draft" }
 
-    return ""
+    return {
+      "status": "draft",
+      "participants_dict_by_email": participants_dict_by_email
+    }
