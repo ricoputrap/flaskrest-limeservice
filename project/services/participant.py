@@ -90,8 +90,6 @@ class ParticipantService:
       "jurusan": "major"
     })
     submitted_participants = df.to_dict('records')
-    print("===== SUBMITTED_PARTICIPANTS:")
-    print(submitted_participants)
 
     # check if the data size is enough
     if len(submitted_participants) < 1:
@@ -102,8 +100,6 @@ class ParticipantService:
           "detail": "The file has no data. Please provide at least 1 row participant data."
         }
       }
-
-    print("===== SUBMITTED PARTICIPANTS is VALID!!! =====")
     
     # save participants to limeservice db
     for participant in submitted_participants:
@@ -122,15 +118,10 @@ class ParticipantService:
       db.session.add(new_participant)
       db.session.commit()
 
-    print("===== ADD PARTICIPANTS to LIMESERVICE DB is SUCCESS")
-
     # populate participants data by email: dict
     participants_dict_by_email = {}
     saved_participants = SurveyParticipantModel.query.filter_by(survey_id=survey.id).all()
 
-    print("===== SAVED PARTICIPANTS:")
-    print(saved_participants)
-    
     for participant in saved_participants:
       participant_email = participant.email
       participant_data = {
@@ -145,26 +136,30 @@ class ParticipantService:
       else:
         participants_dict_by_email[participant_email].append(participant_data)
 
-    print("===== participants_dict_by_email ORIGINAL:")
-    print(participants_dict_by_email)
-
-    # remove non duplicate
+    # remove non duplicate & save the duplicate data as list
     email_to_remove = []
+    duplicate_data = []
     for email, data in participants_dict_by_email.items():
       if len(data) < 2:
         email_to_remove.append(email)
-   
+      else:
+        duplicate_data += data
+
     for email in email_to_remove:
       del participants_dict_by_email[email]
 
-    print("===== DUPLICATE DATA")
-    print(participants_dict_by_email)
-
-
     # if has duplicate, set survey status to DUPL, return with dupl data
-    # else return { status: "draft" }
+    if len(participants_dict_by_email) > 0:
+
+      # update survey status to DUPL
+      survey.status = "DUPL"
+      db.session.commit()
+
+      return {
+        "status": "duplicate",
+        "duplicateParticipant": duplicate_data
+      }
 
     return {
       "status": "draft",
-      "participants_dict_by_email": participants_dict_by_email
     }
