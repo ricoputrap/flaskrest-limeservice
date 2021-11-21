@@ -2,7 +2,9 @@ alembic==1.6.5
 aniso8601==8.0.0
 certifi==2021.5.30
 charset-normalizer==2.0.1
+citric @ git+https://github.com/vianhazman/citric.git@989179c4ffb31ca8aa6373202c7e097dc81b2757
 click==7.1.2
+flake8==4.0.1
 Flask==1.1.2
 flask-marshmallow==0.14.0
 Flask-Migrate==3.0.1
@@ -15,8 +17,13 @@ Jinja2==2.11.2
 Mako==1.1.4
 MarkupSafe==1.1.1
 marshmallow==3.12.2
+mccabe==0.6.1
+numpy==1.21.2
+pandas==1.3.3
 psycopg2-binary==2.8.6
-PyJWT==2.1.0
+pycodestyle==2.8.0
+pyflakes==2.4.0
+PyJWT==2.3.0
 python-dateutil==2.8.2
 python-dotenv==0.18.0
 python-editor==1.0.4
