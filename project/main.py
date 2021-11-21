@@ -19,6 +19,9 @@ from project.models.email_template import EmailTemplateModel
 
 def init_app():
   '''Flask Application Factory'''
+  from project.controllers.v1.survey import Survey
+  from project.middleware import AuthMiddleware
+
   app = Flask(__name__)
   api = Api(app)
 
@@ -33,4 +36,5 @@ def init_app():
   api.add_resource(Participant, "/api/v1/surveys/<survey_id>/participants")
   app.add_url_rule("/api/v1/surveys/<survey_id>/participants/csv", endpoint="participant", methods=["POST"])
   # app.add_url_rule("/api/v1/surveys/participants/db", endpoint="participant", methods=["POST"])
+  app.wsgi_app = AuthMiddleware(app.wsgi_app)
   return app

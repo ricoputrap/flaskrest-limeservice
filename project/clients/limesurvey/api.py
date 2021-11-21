@@ -3,10 +3,14 @@ import logging
 from citric import Client, exceptions
 
 from dotenv import load_dotenv
+
 load_dotenv()
 import os
 
 from project.clients.abstract import AbstractClient
+
+# Load tested with this scale of response in local
+PARTICIPANT_FETCH_LIMIT = 3000
 
 
 def client_factory():
@@ -41,8 +45,9 @@ class LimesurveyClient(AbstractClient):
 
     def list_participants(self, survey_id, fail_silently=False):
         try:
-            res = self.get_client().list_participants(survey_id)
-            return res
+            # TODO: Pagination logic to scale participants number
+            participant_list = self.get_client().list_participants(survey_id, limit=PARTICIPANT_FETCH_LIMIT)
+            return participant_list
         except Exception as e:
             self.logger.error(str(e))
             if not fail_silently:
@@ -74,6 +79,15 @@ class LimesurveyClient(AbstractClient):
                 self.logger.warning(f'Survey {survey_id}: survey has already been activated')
         try:
             res = self.get_client().add_participants(survey_id, participant_list)
+            return res
+        except Exception as e:
+            self.logger.error(str(e))
+            if not fail_silently:
+                raise e
+
+    def delete_survey_participant(self, survey_id, id, fail_silently=False):
+        try:
+            res = self.get_client().delete_participants(survey_id, {"id": id})
             return res
         except Exception as e:
             self.logger.error(str(e))
