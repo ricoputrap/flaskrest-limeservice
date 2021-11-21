@@ -19,6 +19,7 @@ class SurveyModel(db.Model):
   '''
   id =  db.Column(db.Integer, primary_key=True)
   limesurvey_id = db.Column(db.Integer, nullable=False)
+  title = db.Column(db.String(255), nullable=False)
   status = db.Column(db.String(4), nullable=False, default="DRFT")
   created_at = db.Column(db.DateTime, nullable=False)
   created_by = db.Column(db.Integer, nullable=False)

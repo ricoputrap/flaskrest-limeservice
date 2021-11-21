@@ -1,3 +1,4 @@
+from project.controllers.v1.survey import Survey
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -6,8 +7,8 @@ from flask_restful import Api
 import os
 
 '''
-@TODO delete soon for testing only 
-(on a real case, these imports should be called on controllers/services)
+@TODO delete soon, for testing only 
+(on a real case, these imports should be called on the controllers/services)
 '''
 from project.models.survey import SurveyModel
 from project.models.survey_participant import SurveyParticipantModel
@@ -30,7 +31,7 @@ def init_app():
   ma.init_app(app)
   migrate.init_app(app, db)
 
-  api.add_resource(Survey, "/survey/")
+  api.add_resource(Survey, "/surveys/")
   app.wsgi_app = AuthMiddleware(app.wsgi_app)
 
   return app
