@@ -1,12 +1,13 @@
+from flask import request
 from project.models.survey_participant import SurveyParticipantModel
 from project.models.survey import SurveyModel
 from project.clients.limesurvey.api import LimesurveyClient
 from project.utils import db
-import math
-import pandas as pd
-import json
-from datetime import datetime 
 
+from datetime import datetime
+import pandas as pd
+import math
+import requests
 
 class ParticipantService:
 
@@ -163,3 +164,80 @@ class ParticipantService:
     return {
       "status": "draft",
     }
+
+
+  def get_participants_from_atlas_db(self, params):
+    """
+    Retrieve participants data from atlas database
+    """
+    angkatan = params["angkatan"] if "angkatan" in params else ""
+    jurusan = params["jurusan"] if "jurusan" in params else ""
+
+    if not angkatan and not jurusan:
+      return {
+        "status_code": 400,
+        "error": {
+          "title": "No angkatan or jurusan in request body",
+          "detail": "Must specify either `angkatan` or `jurusan` in request body."
+        }
+      }
+
+    headers = {
+      "Authorization": request.headers['Authorization'],
+      "Accept": "application/json"
+    }
+    
+    atlas_users_url = 'https://atlas-iluni12.cs.ui.ac.id/api/v2/users?'
+    if angkatan:
+      atlas_users_url += "year=" + angkatan + "&"
+    if jurusan:
+      atlas_users_url += "program=" + jurusan
+
+    try:
+      response = requests.get(atlas_users_url, headers=headers)
+      if response.status_code == 200:
+        data = response.json()
+        users = data["results"]
+        return users
+      else:
+        return {
+          "status_code": response.status_code,
+          "error": {
+            "title": "Internal server error",
+            "detail": "Internal server error"
+          }
+        }  
+    except Exception as e:
+      return {
+          "status_code": 500,
+          "error": {
+            "title": "Internal server error",
+            "detail": e
+          }
+        } 
+
+    
+  def add_participants_from_atlas_db(self, survey_id, params):
+    """
+    Retrieve participants data from atlas database and save it to limeservice db
+    """
+    # cek if survey exists
+
+    # result: retrieve users data from atlas db
+    result = self.get_participants_from_atlas_db(params)
+
+    if "error" in result:
+      return result
+    
+    # computed_users: compute the result to be a list of users data: { name, email, npm, angkatan }
+
+    # save participants to limeservice db
+
+    # populate participants data by email (as a dictionary)
+
+    # remove non duplicate & save the duplicate data as a list
+
+    # if has duplicate, set survey status to DUPL, return with dupl data: `duplicateParticipant`
+
+    return { "users": result }
+    

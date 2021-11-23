@@ -45,7 +45,11 @@ class Participant(Resource):
           }
           return make_response(res, res["status_code"])
       elif post_type == "db":
-        pass
+        params = request.get_json()
+        response = self.participant_service.add_participants_from_atlas_db(survey_id, params)
+        if "error" in response:
+          return make_response(response, response["status_code"])
+        return response
       else:
         res = {
           "status_code": 500,
