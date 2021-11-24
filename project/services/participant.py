@@ -132,13 +132,10 @@ class ParticipantService:
 
 		# remove non duplicate & save the duplicate data as list
 		email_to_remove = []
-		duplicate_data = []
 		
 		for email, data in participants_dict_by_email.items():
 			if len(data) < 2:
 				email_to_remove.append(email)
-			else:
-				duplicate_data += data
 
 		for email in email_to_remove:
 			del participants_dict_by_email[email]
@@ -152,7 +149,7 @@ class ParticipantService:
 
 			return {
 				"status": "duplicate",
-				"duplicateParticipant": duplicate_data
+				"duplicateParticipant": participants_dict_by_email
 			}
 
 		return {
