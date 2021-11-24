@@ -3,6 +3,7 @@ from project.models.survey_participant import SurveyParticipantModel
 from project.models.survey import SurveyModel
 from project.clients.limesurvey.api import LimesurveyClient
 from project.utils import db
+from project.services.helpers import check_if_survey_exists
 
 from datetime import datetime
 import pandas as pd
@@ -16,15 +17,11 @@ class ParticipantService:
   def get_list_participants(self, survey_id, page, pageSize):
 
     # check if survey exists
-    survey = SurveyModel.query.filter_by(limesurvey_id=survey_id).first()
-    if not survey:
-      return {
-        "status_code": 404,
-        "error": {
-          "title": "Survey doesn't exist",
-          "detail": "Survey with id " + str(survey_id) + " doesn't exist."
-        }
-      }
+    res = check_if_survey_exists(survey_id)
+    if "error" in res:
+      return res["error"]
+
+    survey = res["data"]
 
     # prepare the parameter values
     page = int(page) if page else 1
@@ -73,15 +70,11 @@ class ParticipantService:
   def add_participants_from_csv(self, survey_id, csv_file):
 
     # check if survey exists
-    survey = SurveyModel.query.filter_by(limesurvey_id=survey_id).first()
-    if not survey:
-      return {
-        "status_code": 404,
-        "error": {
-          "title": "Survey doesn't exist",
-          "detail": "Survey with id " + str(survey_id) + " doesn't exist."
-        }
-      }
+    res = check_if_survey_exists(survey_id)
+    if "error" in res:
+      return res["error"]
+
+    survey = res["data"]
 
     # prepare dataframe from the csv file
     df = pd.read_csv(csv_file)
@@ -221,7 +214,11 @@ class ParticipantService:
     """
     Retrieve participants data from atlas database and save it to limeservice db
     """
-    # cek if survey exists
+    
+    # check if survey exists
+    res = check_if_survey_exists(survey_id)
+    if "error" in res:
+      return res["error"]
 
     # result: retrieve users data from atlas db
     result = self.get_participants_from_atlas_db(params)
