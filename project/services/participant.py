@@ -3,10 +3,11 @@ from project.models.survey_participant import SurveyParticipantModel
 from project.models.survey import SurveyModel
 from project.clients.limesurvey.api import LimesurveyClient
 from project.utils import db
-from project.services.helpers import check_if_survey_exists, save_participants_to_limeservice_db
+from project.services.helpers import check_if_survey_exists, \
+	save_participants_to_limeservice_db, extract_participants_from_csv, \
+	get_participants_from_limeservice_db_by_email, \
+	remove_duplicate_participants_inplace
 
-from datetime import datetime
-import pandas as pd
 import math
 import requests
 
@@ -78,55 +79,16 @@ class ParticipantService:
 		survey = res["data"]
 		survey_creator_id = self.client.get_survey_properties(limesurvey_id)['owner_id']
 
-		# prepare dataframe from the csv file
-		df = pd.read_csv(csv_file)
-		df = df.rename(columns={
-			"nama": "name",
-			"angkatan": "batch_year",
-			"jurusan": "major"
-		})
-		submitted_participants = df.to_dict('records')
-
-		# check if the data size is enough
-		if len(submitted_participants) < 1:
-			return {
-				"status_code": 500,
-				"error": {
-					"title": "Empty Participant Data",
-					"detail": "The file has no data. Please provide at least 1 row participant data."
-				}
-			}
+		# extract participants data 
+		res = extract_participants_from_csv(csv_file)
+		if "error" in res:
+			return res["error"]
+		submitted_participants = res["data"]
 		
-		# save participants to limeservice db
+		# save, populate the saved participants by email, and remove duplicates
 		save_participants_to_limeservice_db(survey, survey_creator_id, submitted_participants)
-
-		# populate participants data by email: dict
-		participants_dict_by_email = {}
-		saved_participants = SurveyParticipantModel.query.filter_by(survey_id=survey.id).all()
-
-		for participant in saved_participants:
-			participant_email = participant.email
-			participant_data = {
-				"id": participant.id,
-				"name": participant.name,
-				"email": participant.email,
-				"npm": participant.npm,
-				"angkatan": participant.batch_year,
-			}
-			if participant_email not in participants_dict_by_email:
-				participants_dict_by_email[participant_email] = [participant_data]
-			else:
-				participants_dict_by_email[participant_email].append(participant_data)
-
-		# remove non duplicate & save the duplicate data as list
-		email_to_remove = []
-		
-		for email, data in participants_dict_by_email.items():
-			if len(data) < 2:
-				email_to_remove.append(email)
-
-		for email in email_to_remove:
-			del participants_dict_by_email[email]
+		participants_dict_by_email = get_participants_from_limeservice_db_by_email(survey.id)
+		remove_duplicate_participants_inplace(participants_dict_by_email)
 
 		# if has duplicate, set survey status to DUPL, return with dupl data
 		if len(participants_dict_by_email) > 0:
@@ -140,9 +102,7 @@ class ParticipantService:
 				"duplicateParticipant": participants_dict_by_email
 			}
 
-		return {
-			"status": "draft",
-		}
+		return { "status": "draft" }
 
 
 	def get_participants_from_atlas_db(self, params):
