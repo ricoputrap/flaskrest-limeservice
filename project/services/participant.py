@@ -3,7 +3,7 @@ from project.models.survey_participant import SurveyParticipantModel
 from project.models.survey import SurveyModel
 from project.clients.limesurvey.api import LimesurveyClient
 from project.utils import db
-from project.services.helpers import check_if_survey_exists
+from project.services.helpers import check_if_survey_exists, save_participants_to_limeservice_db
 
 from datetime import datetime
 import pandas as pd
@@ -14,10 +14,10 @@ class ParticipantService:
 
 	client = LimesurveyClient()
 
-	def get_list_participants(self, survey_id, page, pageSize):
+	def get_list_participants(self, limesurvey_id, page, pageSize):
 
 		# check if survey exists
-		res = check_if_survey_exists(survey_id)
+		res = check_if_survey_exists(limesurvey_id)
 		if "error" in res:
 			return res["error"]
 
@@ -68,14 +68,15 @@ class ParticipantService:
 			"items": computed_participants
 		}
 
-	def add_participants_from_csv(self, survey_id, csv_file):
+	def add_participants_from_csv(self, limesurvey_id, csv_file):
 
 		# check if survey exists
-		res = check_if_survey_exists(survey_id)
+		res = check_if_survey_exists(limesurvey_id)
 		if "error" in res:
 			return res["error"]
 
 		survey = res["data"]
+		survey_creator_id = self.client.get_survey_properties(limesurvey_id)['owner_id']
 
 		# prepare dataframe from the csv file
 		df = pd.read_csv(csv_file)
@@ -97,20 +98,7 @@ class ParticipantService:
 			}
 		
 		# save participants to limeservice db
-		for participant in submitted_participants:
-			new_participant = SurveyParticipantModel(
-				survey_id = survey.id,
-				name = participant["name"],
-				email = participant["email"],
-				npm = participant["npm"],
-				batch_year = participant["batch_year"],
-				major = participant["major"],
-				created_at = datetime.now(),
-				created_by = self.client.get_survey_properties(survey_id)['owner_id']
-			)
-
-			db.session.add(new_participant)
-			db.session.commit()
+		save_participants_to_limeservice_db(survey, survey_creator_id, submitted_participants)
 
 		# populate participants data by email: dict
 		participants_dict_by_email = {}
@@ -207,13 +195,13 @@ class ParticipantService:
 			} 
 
 		
-	def add_participants_from_atlas_db(self, survey_id, params):
+	def add_participants_from_atlas_db(self, limesurvey_id, params):
 		"""
 		Retrieve participants data from atlas database and save it to limeservice db
 		"""
 
 		# check if survey exists
-		res = check_if_survey_exists(survey_id)
+		res = check_if_survey_exists(limesurvey_id)
 		if "error" in res:
 			return res["error"]
 
