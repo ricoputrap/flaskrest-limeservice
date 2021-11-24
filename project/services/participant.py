@@ -6,7 +6,9 @@ from project.utils import db
 from project.services.helpers import check_if_survey_exists, \
 	save_participants_to_limeservice_db, extract_participants_from_csv, \
 	get_participants_from_limeservice_db_by_email, \
-	remove_duplicate_participants_inplace
+	remove_duplicate_participants_inplace, \
+	extract_angkatan_and_jurusan_in_params, \
+	extract_participants_from_atlas_db
 
 import math
 import requests
@@ -109,17 +111,12 @@ class ParticipantService:
 		"""
 		Retrieve participants data from atlas database
 		"""
-		angkatan = params["angkatan"] if "angkatan" in params else ""
-		jurusan = params["jurusan"] if "jurusan" in params else ""
-
-		if not angkatan and not jurusan:
-			return {
-				"status_code": 400,
-				"error": {
-					"title": "No angkatan or jurusan in request body",
-					"detail": "Must specify either `angkatan` or `jurusan` in request body."
-				}
-			}
+		res = extract_angkatan_and_jurusan_in_params(params)
+		if "error" in res:
+			return res["error"]
+		
+		angkatan = res["data"][0]
+		jurusan = res["data"][1]
 
 		headers = {
 			"Authorization": request.headers['Authorization'],
@@ -165,6 +162,9 @@ class ParticipantService:
 		if "error" in res:
 			return res["error"]
 
+		survey = res["data"]
+		survey_creator_id = self.client.get_survey_properties(limesurvey_id)['owner_id']
+
 		# result: retrieve users data from atlas db
 		result = self.get_participants_from_atlas_db(params)
 
@@ -172,15 +172,25 @@ class ParticipantService:
 			return result
 		
 		# computed_users: compute the result to be a list of users data: { name, email, npm, angkatan }
-		
+		submitted_participants = extract_participants_from_atlas_db(result)
 
 		# save participants to limeservice db
+		save_participants_to_limeservice_db(survey, survey_creator_id, submitted_participants)
 
 		# populate participants data by email (as a dictionary)
-
-		# remove non duplicate & save the duplicate data as a list
+		participants_dict_by_email = get_participants_from_limeservice_db_by_email(survey.id)
+		remove_duplicate_participants_inplace(participants_dict_by_email)
 
 		# if has duplicate, set survey status to DUPL, return with dupl data: `duplicateParticipant`
+		if len(participants_dict_by_email) > 0:
+			
+			# update survey status to DUPL
+			survey.status = "DUPL"
+			db.session.commit()
 
-		return { "users": result }
-    
+			return {
+				"status": "duplicate",
+				"duplicateParticipant": participants_dict_by_email
+			}
+
+		return { "status": "draft" }

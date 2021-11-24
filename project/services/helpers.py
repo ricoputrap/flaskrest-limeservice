@@ -94,3 +94,41 @@ def remove_duplicate_participants_inplace(participants_dict_by_email):
 
     for email in email_to_remove:
         del participants_dict_by_email[email]
+
+
+def extract_angkatan_and_jurusan_in_params(params):
+    angkatan = params["angkatan"] if "angkatan" in params else ""
+    jurusan = params["jurusan"] if "jurusan" in params else ""
+
+    if not angkatan and not jurusan:
+        return {
+            "error": {
+                "status_code": 400,
+                "error": {
+                    "title": "No angkatan or jurusan in request body",
+                    "detail": "Must specify either `angkatan` or `jurusan` in request body."
+                }
+            }
+        }
+    
+    return {
+        "data": [angkatan, jurusan]
+    }
+
+
+def extract_participants_from_atlas_db(users):
+    """
+    extract the users data with this format:  { name, email, npm, batch_year, major }
+    """
+    participants = []
+    for user in users:
+        computed_user = {
+            "name": user["name"],
+            "email": user["email"],
+            "npm": user["educations"][-1]["uiSsoNpm"],
+            "batch_year": user["educations"][-1]["csuiClassYear"],
+            "major": user["educations"][-1]["csuiProgram"],
+        }
+        participants.append(computed_user)
+
+    return participants
