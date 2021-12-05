@@ -59,13 +59,36 @@ class Participant(Resource):
                 return response
             else:
                 res = {
-                "status_code": 500,
+                    "status_code": 500,
                     "error": {
                         "title": "Upload Method Now Known",
                         "detail": "Use `csv` or `db` only for uploading participants data."
                     }
                 }
                 return make_response(res, res["status_code"])
+        except Exception as e:
+            return {
+                "errors": e
+            }
+    
+    def delete(self, survey_id):
+        try:
+            request_body = request.get_json()
+            ids = request_body["ids"] if "ids" in request_body else ""
+            if not ids:
+                res = {
+                    "status_code": 400,
+                    "error": {
+                        "title": "Bad Request",
+                        "detail": "Please provide a list of participant ids you want to be deleted"
+                    }
+                }
+                return make_response(res, res["status_code"])
+            
+            response = self.participant_service.delete_participants(survey_id, ids)
+            if "error" in response:
+                return make_response(response, response["status_code"])
+            return response
         except Exception as e:
             return {
                 "errors": e

@@ -221,3 +221,41 @@ class ParticipantService:
 			}
 
 		return { "status": "draft" }
+
+
+	def delete_participants(self, limesurvey_id, participant_ids):
+		# check if survey exists
+		res = check_if_survey_exists(limesurvey_id)
+		if "error" in res:
+			return res["error"]
+
+		# survey = res["data"]
+		not_exist_ids = []
+		deleted_ids = []
+
+		for participant_id in participant_ids:
+			participant = SurveyParticipantModel.query.filter_by(id=participant_id).first()
+
+			if not participant:
+				not_exist_ids.append(participant_id)
+			else:
+				db.session.delete(participant)
+				db.session.commit()
+				deleted_ids.append(participant_id)
+
+		if len(not_exist_ids) == len(participant_ids):
+			return {
+				"status_code": 404,
+				"error": {
+					"title": "Participants with the given ids don't exist"
+				}
+			}
+		elif len(not_exist_ids) > 0:
+			return {
+				"deletedIds": deleted_ids,
+				"deletedIdsTotal": len(deleted_ids),
+				"notExistIds": not_exist_ids
+			}
+		return {
+			"deletedIds": deleted_ids
+		}
