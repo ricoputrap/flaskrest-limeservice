@@ -9,10 +9,10 @@ class Participant(Resource):
 
     def get(self, survey_id):
         try:
-            full_path = request.full_path
-            last_endpoint = full_path.split("/")[-1]
-            
-            if last_endpoint == "duplicates?":
+            path_splitted = request.path.split("/")
+            last_endpoint = path_splitted[-1]
+
+            if last_endpoint == "duplicates":
                 response = self.participant_service.get_duplicates_in_limeservice_db(survey_id)
             else:
                 page = request.args.get("page")
@@ -22,7 +22,7 @@ class Participant(Resource):
             if "error" in response:
                 return make_response(response, response["status_code"])
             return response
-            
+
         except Exception as e:
             return {
                 "errors": e
