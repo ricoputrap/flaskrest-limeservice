@@ -22,3 +22,15 @@ class EmailTemplate(Resource):
             return {
                 "errors": e
             }
+
+    def put(self):
+        try:
+            req_body = request.get_json()
+            response = self.email_template_service.update_email_template(req_body)
+            if "error" in response:
+                return make_response(response, response["status_code"])
+            return response
+        except Exception as e:
+            return {
+                "errors": e
+            }
