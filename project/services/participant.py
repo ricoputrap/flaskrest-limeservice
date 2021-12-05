@@ -194,3 +194,30 @@ class ParticipantService:
 			}
 
 		return { "status": "draft" }
+
+
+	def get_duplicates_in_limeservice_db(self, limesurvey_id):
+		# check if survey exists
+		res = check_if_survey_exists(limesurvey_id)
+		if "error" in res:
+			return res["error"]
+
+		survey = res["data"]
+		
+		# retrieve participants of this survey grouped by email
+		participants_dict_by_email = get_participants_from_limeservice_db_by_email(survey.id)
+		remove_duplicate_participants_inplace(participants_dict_by_email)
+
+		# if has duplicate, set survey status to DUPL, return with dupl data
+		if len(participants_dict_by_email) > 0:
+			
+			# update survey status to DUPL
+			survey.status = "DUPL"
+			db.session.commit()
+
+			return {
+				"status": "duplicate",
+				"duplicateParticipant": participants_dict_by_email
+			}
+
+		return { "status": "draft" }
