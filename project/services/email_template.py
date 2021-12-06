@@ -1,8 +1,68 @@
+from werkzeug.wrappers import response
 from project.models.email_template import EmailTemplateModel
 from project.services.helpers import validate_email_template
 from project.utils import db
+import math
+
 
 class EmailTemplateService:
+
+    def get_email_templates(self, page, pageSize, keyword):
+        
+        # prepare the parameter values
+        page = int(page) if page else 1
+        pageSize = int(pageSize) if pageSize else 5
+
+        # filter the email by keyword (if any)
+        email_templates_in_db = EmailTemplateModel.query.all()
+        if keyword:
+            email_templates_in_db = list(filter(
+                lambda template: keyword.lower() in template.name.lower(),
+                email_templates_in_db
+            ))
+
+            if len(email_templates_in_db) == 0:
+                return {
+                    "status_code": 404,
+                    "error": {
+                        "title": "Keyword doesn't match",
+                        "detail": "Keyword doesn't match with the available template names"
+                    }
+                }
+
+        # compute the pagination
+        real_total_templates = len(email_templates_in_db)
+        real_total_pages = math.ceil(real_total_templates / pageSize)
+
+        if page > real_total_pages:
+            return {
+                "status_code": 404,
+                "error": {
+                    "title": "Page requested is not available",
+                    "detail": "Page " + str(page) + " is requested, only " + str(real_total_pages) + " is available."
+                }
+            }
+        
+        email_templates = []
+        end_idx = page * pageSize
+        end_idx = end_idx if end_idx <= real_total_templates else real_total_templates
+        start_idx = pageSize * (page - 1)
+
+        # populate the data based on the pagination
+        for i in range(start_idx, end_idx):
+            email_templates.append({
+                "id": email_templates_in_db[i].id,
+                "name": email_templates_in_db[i].name,
+                "subject": email_templates_in_db[i].subject,
+                "body": email_templates_in_db[i].body,
+            })
+        
+        response = {
+            "currentPage": page,
+            "totalItems": real_total_templates,
+            "items": email_templates
+        }
+        return response
 
     def create_email_template(self, req_body):
 

@@ -9,7 +9,19 @@ class EmailTemplate(Resource):
     email_template_service = EmailTemplateService()
 
     def get(self):
-        pass
+        try:
+            page = request.args.get("page")
+            pageSize = request.args.get("pageSize")
+            keyword = request.args.get("keyword")
+            response = self.email_template_service.get_email_templates(
+                page, pageSize, keyword)
+            if "error" in response:
+                return make_response(response, response["status_code"])
+            return response
+        except Exception as e:
+            return {
+                "errors": e
+            }
 
     def post(self):
         try:
