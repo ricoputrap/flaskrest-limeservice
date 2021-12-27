@@ -10,8 +10,8 @@ class AuthMiddleware:
     auth_token_not_valid = { "message": "Authentication token is not valid." }
     auth_has_not_access = { "message": "User has no access" }
     
-    ATLAS_JWT_SECRET_KEY = os.getenv("ATLAS_JWT_SECRET_KEY")
-    ATLAS_JWT_ALGO = os.getenv("ATLAS_JWT_ALGO")
+    # ATLAS_JWT_SECRET_KEY = os.getenv("ATLAS_JWT_SECRET_KEY")
+    # ATLAS_JWT_ALGO = os.getenv("ATLAS_JWT_ALGO")
 
     def __init__(self, app):
         self.app = app
@@ -31,18 +31,17 @@ class AuthMiddleware:
             # decoded_token = jwt.decode(auth_token, AuthMiddleware.ATLAS_JWT_SECRET_KEY, algorithms=[AuthMiddleware.ATLAS_JWT_ALGO])
             user_id = decoded_token['user_id']
 
-            is_token_valid = True
-
             is_token_valid = self.is_token_valid(user_id, header_auth_token)
+            
             if is_token_valid:
                 has_access = self.has_access(is_token_valid)
                 if has_access:
                     return self.app(environ, start_response)
                 else:
-                    res.data = AuthMiddleware.auth_has_not_access
+                    res.data = json.dumps(AuthMiddleware.auth_has_not_access)
                     return res(environ, start_response)
             else:
-                res.data = AuthMiddleware.auth_token_not_valid
+                res.data = json.dumps(AuthMiddleware.auth_token_not_valid)
                 return res(environ, start_response)
         
         except jwt.InvalidTokenError:
@@ -53,7 +52,7 @@ class AuthMiddleware:
             res.data = json.dumps(AuthMiddleware.auth_token_not_provided)
             return res(environ, start_response)
 
-        except:
+        except Exception:
             res.data = json.dumps(AuthMiddleware.auth_token_not_provided)
             return res(environ, start_response)
             
