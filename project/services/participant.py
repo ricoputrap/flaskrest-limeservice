@@ -194,3 +194,68 @@ class ParticipantService:
 			}
 
 		return { "status": "draft" }
+
+
+	def get_duplicates_in_limeservice_db(self, limesurvey_id):
+		# check if survey exists
+		res = check_if_survey_exists(limesurvey_id)
+		if "error" in res:
+			return res["error"]
+
+		survey = res["data"]
+		
+		# retrieve participants of this survey grouped by email
+		participants_dict_by_email = get_participants_from_limeservice_db_by_email(survey.id)
+		remove_duplicate_participants_inplace(participants_dict_by_email)
+
+		# if has duplicate, set survey status to DUPL, return with dupl data
+		if len(participants_dict_by_email) > 0:
+			
+			# update survey status to DUPL
+			survey.status = "DUPL"
+			db.session.commit()
+
+			return {
+				"status": "duplicate",
+				"duplicateParticipant": participants_dict_by_email
+			}
+
+		return { "status": "draft" }
+
+
+	def delete_participants(self, limesurvey_id, participant_ids):
+		# check if survey exists
+		res = check_if_survey_exists(limesurvey_id)
+		if "error" in res:
+			return res["error"]
+
+		# survey = res["data"]
+		not_exist_ids = []
+		deleted_ids = []
+
+		for participant_id in participant_ids:
+			participant = SurveyParticipantModel.query.filter_by(id=participant_id).first()
+
+			if not participant:
+				not_exist_ids.append(participant_id)
+			else:
+				db.session.delete(participant)
+				db.session.commit()
+				deleted_ids.append(participant_id)
+
+		if len(not_exist_ids) == len(participant_ids):
+			return {
+				"status_code": 404,
+				"error": {
+					"title": "Participants with the given ids don't exist"
+				}
+			}
+		elif len(not_exist_ids) > 0:
+			return {
+				"deletedIds": deleted_ids,
+				"deletedIdsTotal": len(deleted_ids),
+				"notExistIds": not_exist_ids
+			}
+		return {
+			"deletedIds": deleted_ids
+		}

@@ -132,3 +132,39 @@ def extract_participants_from_atlas_db(users):
         participants.append(computed_user)
 
     return participants
+
+
+def validate_email_template(req_body):
+    name = req_body["name"] if "name" in req_body else ""
+    subject = req_body["subject"] if "subject" in req_body else ""
+    body = req_body["body"] if "body" in req_body else ""
+
+    # populate empty fields
+    empty_fields = []
+    if not name:
+        empty_fields.append({ "field": "name", "value": name })
+    if not subject:
+        empty_fields.append({ "field": "subject", "value": subject })
+    if not body:
+        empty_fields.append({ "field": "body", "value": body })
+    
+    # return error if any field empty
+    if len(empty_fields) > 0:
+        res = { 
+            "status_code": 400,
+            "error": {
+                "title": "Bad Request"
+            }
+        }
+        if len(empty_fields) == 1:
+            error_detail = "Missing the value of " + empty_fields[0]["field"]
+        elif len(empty_fields) == 2:
+            error_detail = "Missing the values of " + empty_fields[0]["field"] \
+                + " and " + empty_fields[1]["field"]
+        else:
+            error_detail = "Missing the values of " + empty_fields[0]["field"] \
+                + ", " + empty_fields[1]["field"] + ", and" + empty_fields[2]["field"]
+        res["error"]["detail"] = error_detail
+        return res
+    
+    return req_body
