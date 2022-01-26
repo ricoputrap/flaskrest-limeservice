@@ -2,6 +2,7 @@ alembic==1.6.5
 aniso8601==8.0.0
 certifi==2021.5.30
 charset-normalizer==2.0.1
+citric @ git+https://github.com/vianhazman/citric.git@989179c4ffb31ca8aa6373202c7e097dc81b2757
 click==7.1.2
 flake8==4.0.1
 Flask==1.1.2
@@ -32,4 +33,3 @@ six==1.15.0
 SQLAlchemy==1.3.18
 urllib3==1.26.6
 Werkzeug==2.0.1
-citric@git+https://github.com/vianhazman/citric.git
