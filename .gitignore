@@ -19,6 +19,7 @@ _mailinglist
 docs/_build/
 .vscode
 *.db
+migrations/
 
 # Coverage reports
 htmlcov/
