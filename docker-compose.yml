@@ -4,7 +4,7 @@ services:
     webservice:
         build: .
         ports:
-            - "${WEB_PORT}:5000"
+            - 9000:5000
         volumes:
             - ./:/app
         env_file:
@@ -14,7 +14,7 @@ services:
     db:
         image: postgres
         ports:
-            - "${DB_PORT}:5432"
+            - 5432:5432
         volumes:
             - postgres_data:/var/lib/postgresql/data/
         env_file:
