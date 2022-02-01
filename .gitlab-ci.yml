@@ -4,7 +4,7 @@ stages:
 
 variables:
   SERVICE_DIRECTORY: /home/admin/${CI_PROJECT_NAME}
-  DOCKER_COMPOSE_COMMAND: docker-compose  -f docker-compose.prod.yml up -d --build
+  DOCKER_COMPOSE_COMMAND: docker-compose  -f docker-compose.yml up -d --build
   VM_USER: admin
   ENV_FILE_NAME: .env
 
