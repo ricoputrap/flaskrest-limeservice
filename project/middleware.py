@@ -6,6 +6,8 @@ import os
 
 class AuthMiddleware:
 
+    ATLAS_BASE_URL = os.getenv("ATLAS_BASE_URL")
+
     auth_token_not_provided = { "message": "Authentication credentials were not provided." }
     auth_token_not_valid = { "message": "Authentication token is not valid." }
     auth_has_not_access = { "message": "User has no access" }
@@ -57,7 +59,7 @@ class AuthMiddleware:
             return res(environ, start_response)
             
     def is_token_valid(self, user_id, header_auth_token):
-        auth_url = 'https://atlas-iluni12.cs.ui.ac.id/api/v1/users/' + user_id
+        auth_url = f'{AuthMiddleware.ATLAS_BASE_URL}/api/v1/users/' + user_id
         headers = {"Authorization": header_auth_token}
 
         response = requests.get(auth_url, headers=headers)

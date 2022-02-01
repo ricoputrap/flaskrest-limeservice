@@ -1,0 +1,32 @@
+stages:
+  - staging
+#  - production
+
+variables:
+  SERVICE_DIRECTORY: /home/admin/${CI_PROJECT_NAME}
+  DOCKER_COMPOSE_COMMAND: docker-compose  -f docker-compose.prod.yml up -d --build
+  VM_USER: admin
+  ENV_FILE_NAME: .env
+
+before_script:
+  - apk update
+  - apk add openssh-client bash sshpass
+  - export GIT_DISCOVERY_ACROSS_FILESYSTEM=1
+
+deploy_staging:
+  stage: staging
+  script:
+    - echo "==UPDATE ENV FILE=="
+    - sshpass -p $STAGING_VM_PASSWORD scp -o StrictHostKeyChecking=no $STAGING_ENV $VM_USER@$STAGING_VM_IP:$SERVICE_DIRECTORY/$ENV_FILE_NAME
+    - sshpass -p $STAGING_VM_PASSWORD ssh -o StrictHostKeyChecking=no $VM_USER@$STAGING_VM_IP "cd $SERVICE_DIRECTORY ; echo "==PULLING FROM REF BRANCH==" ; git checkout -b $CI_COMMIT_REF_NAME ; git checkout $CI_COMMIT_REF_NAME ; git pull origin $CI_COMMIT_REF_NAME ; echo "==REBUILDING DOCKER IMAGE==" ; $DOCKER_COMPOSE_COMMAND"
+  when: manual
+
+#deploy_production:
+#  stage: production
+#  script:
+#    - echo "==UPDATE ENV FILE=="
+#    - sshpass -p $PRODUCTION_VM_PASSWORD scp -o StrictHostKeyChecking=no $PRODUCTION_ENV $VM_USER@$PRODUCTION_VM_IP:$SERVICE_DIRECTORY/$ENV_FILE_NAME
+#    - sshpass -p $PRODUCTION_VM_PASSWORD ssh -o StrictHostKeyChecking=no $VM_USER@$PRODUCTION_VM_IP "cd $SERVICE_DIRECTORY ; echo "==PULLING LATEST MASTER==" ; git checkout master ; git pull origin master ; echo "==REBUILDING DOCKER IMAGE==" ; $DOCKER_COMPOSE_COMMAND"
+#  only:
+#    - master
+#  when: manual
