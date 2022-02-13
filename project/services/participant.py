@@ -13,12 +13,37 @@ from project.services.helpers import check_if_survey_exists, \
 import math
 import requests
 
+
+def _get_total_participants(limesurvey_id=None, survey_id=None):
+	if limesurvey_id:
+		res = check_if_survey_exists(limesurvey_id)
+		if "error" in res:
+			return res["error"]
+
+		survey_id = res["data"].id
+	return SurveyParticipantModel.query.filter_by(survey_id=survey_id).count()
+
+
 class ParticipantService:
 
 	client = LimesurveyClient()
 
-	def get_list_participants(self, limesurvey_id, page, pageSize):
+	def add_participant_token(self, participant_id, token):
+		participant = SurveyParticipantModel.query.filter_by(id=participant_id).first()
+		participant.token = token
+		db.session.merge(participant)
+		return participant
 
+	def clear_survey_participants_token(self, limesurvey_id):
+		res = check_if_survey_exists(limesurvey_id)
+		if "error" in res:
+			return res["error"]
+
+		survey = res["data"]
+		res = SurveyParticipantModel.query.filter_by(survey_id=survey.id).update(dict(token=None))
+		return True
+
+	def get_list_participants(self, limesurvey_id, page, pageSize):
 		# check if survey exists
 		res = check_if_survey_exists(limesurvey_id)
 		if "error" in res:
@@ -30,10 +55,9 @@ class ParticipantService:
 		page = int(page) if page else 1
 		pageSize = int(pageSize) if pageSize else 5
 
-		participants = SurveyParticipantModel.query.filter_by(survey_id=survey.id).all()
-		real_total_participants = len(participants)
+		participants = SurveyParticipantModel.query.filter_by(survey_id=survey.id).order_by(SurveyParticipantModel.id.desc()).paginate(page, pageSize, False).items
+		real_total_participants = _get_total_participants(survey_id=survey.id)
 		real_total_pages = math.ceil(real_total_participants / pageSize)
-
 		if real_total_participants == 0:
 			return {
 				"currentPage": 1,
@@ -52,22 +76,20 @@ class ParticipantService:
 			}
 
 		computed_participants = []
-		end_idx = page * pageSize
-		end_idx = end_idx if end_idx <= real_total_participants else real_total_participants
-		start_idx = pageSize * (page - 1)
 
-		for i in range(start_idx, end_idx):
+		for participant in participants:
 			computed_participants.append({
-				"id": participants[i].id,
-				"name": participants[i].name,
-				"email": participants[i].email,
-				"npm": participants[i].npm,
-				"angkatan": participants[i].batch_year,
+				"id": participant.id,
+				"name": participant.name,
+				"email": participant.email,
+				"npm": participant.npm,
+				"angkatan": participant.batch_year,
 			})
 		
 		return {
 			"currentPage": page,
 			"totalItems": real_total_participants,
+			"totalPages": real_total_pages,
 			"items": computed_participants
 		}
 

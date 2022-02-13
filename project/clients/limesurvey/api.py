@@ -11,7 +11,14 @@ from project.clients.abstract import AbstractClient
 
 # Load tested with this scale of response in local
 PARTICIPANT_FETCH_LIMIT = 3000
+OPTIONAL_ATTRIBUTES = {"limesurvey_id": 0,
+                       "angkatan": 1,
+                        "npm": 2
+                       }
 
+def _get_optional_attributes(key):
+    value = OPTIONAL_ATTRIBUTES[key]
+    return f"attribute_{value}"
 
 def client_factory():
     HOST = os.getenv('LIMESURVEY_HOST')
@@ -74,7 +81,10 @@ class LimesurveyClient(AbstractClient):
     def add_survey_participant(self, survey_id, participant_list, fail_silently=False, try_activate=True):
         if try_activate:
             try:
-                self.get_client().activate_tokens(survey_id)
+                # Optional attributes can only be in form of integers, thus mapping of values is provided
+                # Ref: https://github.com/LimeSurvey/LimeSurvey/blob/master/application/helpers/remotecontrol/remotecontrol_handle.php#L2563
+                attributes = list(OPTIONAL_ATTRIBUTES.values())
+                self.get_client().activate_tokens(survey_id, attributes)
             except:
                 self.logger.warning(f'Survey {survey_id}: survey has already been activated')
         try:

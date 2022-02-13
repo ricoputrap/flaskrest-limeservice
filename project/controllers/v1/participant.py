@@ -31,8 +31,7 @@ class Participant(Resource):
     def post(self, survey_id):
         try:
             path_splitted = request.path.split("/")
-            post_type = path_splitted[-1]
-            
+            post_type = path_splitted[-1].strip()
             if post_type == "csv":
                 csv_file = request.files['csvFile']
                 file_type = csv_file.__dict__['filename'][-3:]

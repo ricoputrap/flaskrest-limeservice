@@ -36,6 +36,7 @@ def init_app():
     api.add_resource(Participant, "/api/v1/surveys/<survey_id>/participants/", "/api/v1/surveys/<survey_id>/participants/duplicates")
     app.add_url_rule("/api/v1/surveys/<survey_id>/participants/csv", endpoint="participant", methods=["POST"])
     app.add_url_rule("/api/v1/surveys/<survey_id>/participants/db", endpoint="participant", methods=["POST"])
+    app.add_url_rule("/api/v1/surveys/<survey_id>/save", endpoint="survey", methods=["POST"])
     api.add_resource(EmailTemplate, "/api/v1/email-templates/")
 
     # app.add_url_rule("/api/v1/surveys/participants/db", endpoint="participant", methods=["POST"])

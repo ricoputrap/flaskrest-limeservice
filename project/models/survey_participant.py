@@ -8,6 +8,7 @@ class SurveyParticipantModel(db.Model):
     npm = db.Column(db.String(20), nullable=False)
     batch_year = db.Column(db.Integer, nullable=False)
     major = db.Column(db.String(100), nullable=False)
+    token = db.Column(db.String(20), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False)
     created_by = db.Column(db.Integer, nullable=False)
     deleted_at = db.Column(db.DateTime, nullable=True)
